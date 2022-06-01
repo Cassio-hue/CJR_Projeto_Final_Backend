@@ -1,0 +1,75 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  Int                @id @default(autoincrement())
+  name                String             @db.VarChar(255)
+  email               String             @unique @db.VarChar(255)
+  password            String             @db.VarChar(255)
+  isAdmin             Boolean?           @default(false)
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  orders              Order[]
+}
+
+model Order {
+  id                  Int                @default(autoincrement()) @id
+  price               Decimal
+  user                User               @relation(fields: [UserId], references: [id])
+  UserId              Int                
+  OrderId             Int                
+  situationId         Int?                
+  situation           Situation?         @relation(fields: [situationId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  meals               OrderHasMeal[]
+}
+
+model OrderHasMeal {
+  mealId              Int                @unique
+  meal                Meal               @relation(fields: [mealId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orderId             Int
+  order               Order              @relation(fields: [orderId], references: [id],onDelete: SetNull, onUpdate: Cascade)                
+  quantity            Int
+
+  @@id([mealId, orderId])
+}
+
+model Meal {
+  id                  Int                @default(autoincrement()) @id
+  name                String             @db.VarChar(255)
+  description         String?            @db.VarChar(255)
+  price               Decimal            @db.Decimal(10, 2)
+  imagePath           String?            @db.VarChar(255)
+  available           Boolean?
+  mealCategoryId      Int          
+  mealCategory        MealCategory?      @relation(fields: [mealCategoryId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  order               OrderHasMeal[]
+}
+
+model MealCategory {
+  id                  Int                @default(autoincrement()) @id
+  name                String
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  meals               Meal[]
+}
+
+model Situation {
+  id                  Int                 @default(autoincrement()) @id
+  description         String              @unique
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  orders              Order[]
+}
